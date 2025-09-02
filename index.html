@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amalan Baik KVBW</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f4f7f9;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8-px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #e0e6ed;
+        border-radius: 8px;
+        background-color: #fafafa;
+      }
+      input[type="text"], input[type="password"], textarea {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+      }
+      #add-button {
+        background-color: #27ae60;
+        color: #fff;
+      }
+      #add-button:hover {
+        background-color: #229a56;
+      }
+      #delete-button {
+        background-color: #c0392b;
+        color: #fff;
+      }
+      #delete-button:hover {
+        background-color: #a73326;
+      }
+      .message {
+        text-align: center;
+        padding: 10px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #fff;
+      }
+      th, td {
+        padding: 12px;
+        border: 1px solid #e0e6ed;
+        text-align: left;
+      }
+      th {
+        background-color: #eaf1f7;
+        font-weight: bold;
+        color: #555;
+      }
+      tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      tbody tr:hover {
+        background-color: #f1f5f8;
+      }
+      .delete-cell {
+        text-align: center;
+      }
+      input[type="checkbox"] {
+        transform: scale(1.2);
+      }
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+        .container {
+          padding: 10px;
+        }
+        form {
+          padding: 15px;
+        }
+        table, thead, tbody, th, td, tr {
+          display: block;
+        }
+        thead tr {
+          display: none;
+        }
+        tr {
+          margin-bottom: 15px;
+          border: 1px solid #e0e6ed;
+        }
+        td {
+          border: none;
+          position: relative;
+          padding-left: 50%;
+          text-align: right;
+        }
+        td:before {
+          content: attr(data-label);
+          position: absolute;
+          left: 0;
+          width: 50%;
+          padding-left: 15px;
+          font-weight: bold;
+          text-align: left;
+          color: #555;
+        }
+        .delete-cell td:before {
+          content: "";
+        }
+        .delete-cell {
+          text-align: right;
+          padding-right: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Amalan Baik KVBW</h1>
+
+      <form id="data-form">
+        <input type="text" id="nama-guru-input" placeholder="NAMA GURU" required>
+        <textarea id="amalan-baik-input" placeholder="AMALAN BAIK" required></textarea>
+        <input type="password" id="password-input" placeholder="Enter password to add/delete" required>
+        <button type="submit" id="add-button">Add Data</button>
+      </form>
+
+      <div id="status-message" class="message"></div>
+
+      <div class="table-container">
+        <button id="delete-button">Delete Selected Data</button>
+        <table>
+          <thead>
+            <tr>
+              <th class="delete-cell">Delete</th>
+              <th>NAMA GURU</th>
+              <th>AMALAN BAIK</th>
+            </tr>
+          </thead>
+          <tbody id="data-table-body">
+            <!-- Data will be inserted here by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      /**
+       * @file index.html
+       * @description Client-side JavaScript for a PHP web app.
+       * Handles form submission, data display, and deletion using Fetch API.
+       */
+
+      // --- HTML Element Selectors ---
+      const dataForm = document.getElementById('data-form');
+      const namaGuruInput = document.getElementById('nama-guru-input');
+      const amalanBaikInput = document.getElementById('amalan-baik-input');
+      const passwordInput = document.getElementById('password-input');
+      const dataTableBody = document.getElementById('data-table-body');
+      const deleteButton = document.getElementById('delete-button');
+      const statusMessage = document.getElementById('status-message');
+
+      // --- Configuration ---
+      const API_URL = 'process.php'; // Path to your PHP backend script
+
+      // --- EVENT LISTENERS ---
+      document.addEventListener('DOMContentLoaded', loadData);
+      dataForm.addEventListener('submit', handleFormSubmit);
+      deleteButton.addEventListener('click', handleDelete);
+
+      /**
+       * Loads the initial data from the PHP backend and populates the table.
+       */
+      async function loadData() {
+        showStatus('Loading data...', 'info');
+        try {
+          const response = await fetch(`${API_URL}?action=get`);
+          const result = await response.json();
+
+          if (result.error) {
+            onFailure({ message: result.error });
+          } else {
+            onDataLoaded(result);
+          }
+        } catch (error) {
+          onFailure({ message: `Failed to fetch data: ${error.message}` });
+        }
+      }
+
+      /**
+       * Callback function for successful data retrieval.
+       * @param {Array<Object>} data The data returned from the PHP backend.
+       */
+      function onDataLoaded(data) {
+        dataTableBody.innerHTML = ''; // Clear existing table rows
+        if (!data || data.length === 0) {
+          showStatus('No data available. Add some using the form above.', 'info');
+          return;
+        }
+
+        data.forEach((row, index) => {
+          const newRow = dataTableBody.insertRow();
+          const rowIdentifier = index; // Use 0-based index for client-side deletion logic
+
+          // Delete Checkbox Cell
+          const deleteCell = newRow.insertCell(0);
+          deleteCell.classList.add('delete-cell');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.name = 'row-to-delete';
+          checkbox.value = rowIdentifier; // Store the 0-based index as value
+          checkbox.disabled = false; // Always enabled for deletion via password
+          deleteCell.appendChild(checkbox);
+          deleteCell.setAttribute('data-label', 'Delete');
+
+          // NAMA GURU Cell
+          const namaGuruCell = newRow.insertCell(1);
+          namaGuruCell.textContent = row.namaGuru;
+          namaGuruCell.setAttribute('data-label', 'NAMA GURU');
+
+          // AMALAN BAIK Cell
+          const amalanBaikCell = newRow.insertCell(2);
+          amalanBaikCell.textContent = row.amalanBaik;
+          amalanBaikCell.setAttribute('data-label', 'AMALAN BAIK');
+        });
+
+        // Clear status message after successful load
+        showStatus('');
+      }
+
+      /**
+       * Handles form submission to add new data.
+       * @param {Event} e The form submit event.
+       */
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        showStatus('Adding data...', 'info');
+        const namaGuru = namaGuruInput.value;
+        const amalanBaik = amalanBaikInput.value;
+        const password = passwordInput.value;
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'add',
+              namaGuru: namaGuru,
+              amalanBaik: amalanBaik,
+              password: password,
+            }),
+          });
+          const result = await response.json();
+          onDataAdded(result);
+          loadData(); // Re-load data after success
+        } catch (error) {
+          onFailure({ message: `Failed to add data: ${error.message}` });
+        }
+      }
+
+      /**
+       * Callback function for a successful data addition.
+       * @param {Object} response The response object from the PHP backend.
+       */
+      function onDataAdded(response) {
+        if (response.success) {
+          showStatus(response.message, 'success');
+          namaGuruInput.value = '';
+          amalanBaikInput.value = '';
+        } else {
+          showStatus(response.message, 'error');
+        }
+      }
+
+      /**
+       * Handles the deletion of selected data rows.
+       */
+      async function handleDelete() {
+        const checkboxes = document.querySelectorAll('input[name="row-to-delete"]:checked');
+        if (checkboxes.length === 0) {
+          showStatus('Please select at least one row to delete.', 'error');
+          return;
+        }
+
+        showStatus('Deleting data...', 'info');
+        // Collect 0-based indices of rows to delete
+        const indicesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        const password = passwordInput.value;
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'delete',
+              indices: indicesToDelete, // Send 0-based indices
+              password: password,
+            }),
+          });
+          const result = await response.json();
+          onDataDeleted(result);
+          loadData(); // Re-load data after success
+        } catch (error) {
+          onFailure({ message: `Failed to delete data: ${error.message}` });
+        }
+      }
+
+      /**
+       * Callback for successful data deletion.
+       * @param {Object} response The response object from the PHP backend.
+       */
+      function onDataDeleted(response) {
+        if (response.success) {
+          showStatus(response.message, 'success');
+          passwordInput.value = '';
+        } else {
+          showStatus(response.message, 'error');
+        }
+      }
+
+      /**
+       * Generic failure handler for backend calls.
+       * @param {Object} error The error object.
+       */
+      function onFailure(error) {
+        console.error('Backend call failed:', error.message);
+        showStatus('An error occurred: ' + error.message, 'error');
+      }
+
+      /**
+       * Displays a status message to the user.
+       * @param {string} message The message to display.
+       * @param {string} type The type of message ('success', 'error', 'info').
+       */
+      function showStatus(message, type = '') {
+        statusMessage.textContent = message;
+        statusMessage.className = `message ${type}`;
+      }
+    </script>
+  </body>
+</html>
